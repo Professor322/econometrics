@@ -11,8 +11,6 @@ library("hexbin")
 library("dplyr")
 library("GGally")
 
-install.packages("sjPlot")
-remove.packages("sjPlot")
 # generate random variable
 # z_1, ....., z_100 ~ N(5,9)
 z <- rnorm(100, 5, 3)
