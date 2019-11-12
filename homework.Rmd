@@ -1,0 +1,75 @@
+---
+title: "dz"
+author: "Professor322"
+date: "11/12/2019"
+language: russian
+output: word_document
+---
+
+```{r setup, include=FALSE}
+library("memisc")
+library("dplyr")
+library("psych")
+library("lmtest")
+library("sjPlot")
+library("sgof")
+library("ggplot2")
+library("foreign")
+library("hexbin")
+library("dplyr")
+library("pander")
+library("GGally")
+library(broom)
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Проверка остатков на гетероскедасичность (тест Шлдфелда Квандта)
+Перенесем таблицу данных в R
+```{r}
+data <- data.frame(GDP = c(10.13,18.88,20.94, 22.16, 24.64,27.75,40.15,51.62,57.71,66.32,76.88,101.65,115.97,124.15,140.98,169.38,186.33,211.78,261.41,395.51),
+                   GovSpendings = c(0.22,1.23,1.81,1.02,1.07,0.67,0.75,2.80,4.90,4.45,4.26,5.31,6.40,11.22,8.66,13.41,5.46,4.79,18.9,15.95))
+data
+```
+
+Построим график зависимости расходов от ВВП
+
+```{r}
+gg0 <- qplot(data=data, GDP, GovSpendings)
+gg0 + aes(col=GDP)+stat_smooth(method="lm")
+
+```
+
+Оценим модель и построим график квадратов остатков в зависимости от регрессора
+```{r}
+model <- lm(data = data, GovSpendings~0+GDP)
+summary(model)
+data <- augment(model, data)
+qplot(data=data, .resid^2)
+```
+После анализаа этого графика есть основания предполагать наличие гетероскедастичности
+
+Ручная проверка
+Сформируем два набора оценим их
+
+```{r}
+data1 <- data.frame(GDP = data$GDP[1:7], GovSpendings = data$GovSpendings[1:7])
+data1
+data2 <- data.frame(GDP = data$GDP[14:20], GovSpendings = data$GovSpendings[14:20])
+data2
+
+aux_model1 <- lm(data=data1, GovSpendings~0+GDP)
+aux_model2 <- lm(data=data2, GovSpendings~0+GDP)
+RSS1 <- deviance(aux_model1)
+RSS2 <- deviance(aux_model2)
+RSS2/RSS1
+qf(0.95, df1=6, df2 = 6)
+```
+
+
+Проверим тестом Квандта
+
+```{r}
+gqtest(model, fraction = 0.3, order.by = ~GDP, data=data)
+```
+
